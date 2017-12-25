@@ -16,6 +16,17 @@ As the illustration of LeakGAN. We specifically introduce a hierarchical generat
 
 Next, given the goal embedding produced by the MANAGER, the WORKER firstly encodes current generated words with another LSTM, then combines the output of the LSTM and the goal embedding to take a final action at current state. As such, the guiding signals from D are not only available to G at the end in terms of the scalar reward signals, but also available in terms of a goal embedding vector during the generation process to guide G how to get improved.
 
+## Reference
+```bash
+@article{guo2017long,
+  title={Long Text Generation via Adversarial Training with Leaked Information},
+  author={Guo, Jiaxian and Lu, Sidi and Cai, Han and Zhang, Weinan and Yu, Yong and Wang, Jun},
+  journal={arXiv preprint arXiv:1709.08624},
+  year={2017}
+}
+```
+
+
 You can get the code and run the experiments in follow folders.
 ## Folder
 
