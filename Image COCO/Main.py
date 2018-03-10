@@ -12,6 +12,7 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_boolean('restore', False, 'Training or testing a model')
 flags.DEFINE_boolean('resD', False, 'Training or testing a D model')
+flags.DEFINE_boolean('Continue', True, 'Continue unfinished training (default is True)')
 flags.DEFINE_string('model', "", 'Model NAME')
 #########################################################################################
 #  Generator  Hyper-parameters
@@ -149,6 +150,30 @@ def get_reward(model,dis, sess, input_x, rollout_num, dis_dropout_keep_prob,tota
     return rewards
 
 def main():
+    #########################################################################################
+    #  Epoch Recorder
+    #########################################################################################
+    epoch_record = 10*5
+    global_step = 1
+    if FLAGS.Continue:
+        try:
+            file = open(model_path+'/epochRecordInfo.pkl', 'rb')
+            epoch_record = pickle.load(file)
+            file.close()
+            file = open(model_path+'/global_step.pkl', 'rb')
+            global_step = pickle.load(file)
+            file.close()
+        except Exception as e:
+            epoch_record = 10*5
+            global_step = 1
+    else:
+        file = open(model_path+'/epochRecordInfo.pkl', 'wb')
+        pickle.dump(epoch_record, file)
+        file.close()
+        file = open(model_path+'/global_step.pkl', 'wb')
+        pickle.dump(global_step, file)
+        file.close()
+
     random.seed(SEED)
     np.random.seed(SEED)
     assert START_TOKEN == 0
@@ -163,7 +188,6 @@ def main():
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
     for a in range(1):
@@ -204,8 +228,14 @@ def main():
         else:
                 print('Start pre-training discriminator...')
                 # Train 3 epoch on the generated data and do this for 50 times
-                for i in range(16):
-                    for _ in range(5):
+                if FLAGS.Continue:
+                    saver.restore(sess, model_path+'/leakgan_preD')
+                    saver.restore(sess, model_path+'/leakgan_pre')
+
+                for i in range((epoch_record+10-1)//5):
+                    if epoch_record == 0:
+                        break
+                    for _ in range(epoch_record%5):
                         generate_samples(sess, leakgan, BATCH_SIZE, generated_num, negative_file,0)
                         # gen_data_loader.create_batches(positive_file)
                         dis_data_loader.load_train_data(positive_file, negative_file)
@@ -223,6 +253,10 @@ def main():
                                 buffer =  str(D_loss) + '\n'
                                 log.write(buffer)
                         leakgan.update_feature_function(discriminator)
+                        epoch_record -= 1
+                        file = open(model_path+'/epochRecordInfo.pkl', 'wb')
+                        pickle.dump(epoch_record, file)
+                        file.close()
                     saver.save(sess, model_path + '/leakgan_preD')
 
             # saver.save(sess, model_path + '/leakgan')
@@ -243,6 +277,9 @@ def main():
     print('#########################################################################')
     print('Start Adversarial Training...')
     log.write('adversarial training...\n')
+    if FLAGS.Continue:
+        saver.restore(sess, tf.train.latest_checkpoint(model_path+'/'))
+
     for total_batch in range(TOTAL_BATCH):
         # Train the generator for one step
         for it in range(1):
@@ -253,11 +290,11 @@ def main():
                 feed = {leakgan.x: samples, leakgan.reward: rewards,leakgan.drop_out:1.0}
                 _,_,g_loss,w_loss = sess.run([leakgan.manager_updates,leakgan.worker_updates,leakgan.goal_loss,leakgan.worker_loss], feed_dict=feed)
                 print('total_batch: ', total_batch, "  ",g_loss,"  ", w_loss)
-
+        global_step += 1
         # Test
         if total_batch % 10 == 1 or total_batch == TOTAL_BATCH - 1:
             generate_samples(sess, leakgan, BATCH_SIZE, generated_num, "./save/coco_" + str(total_batch) + ".txt", 0)
-            saver.save(sess, model_path + '/leakgan', global_step=total_batch)
+            saver.save(sess, model_path + '/leakgan', global_step=global_step)
         if total_batch % 15 == 0:
              for epoch in range(1):
                  loss = pre_train_epoch(sess, leakgan, gen_data_loader)
@@ -278,6 +315,10 @@ def main():
                     D_loss, _ = sess.run([discriminator.D_loss, discriminator.D_train_op], feed)
                     # print 'D_loss ', D_loss
             leakgan.update_feature_function(discriminator)
+        file = open(model_path+'/global_step.pkl', 'wb')
+        pickle.dump(global_step, file)
+        file.close()
+        saver.save(sess, model_path + '/leakgan')
     log.close()
 
 
