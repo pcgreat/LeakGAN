@@ -255,10 +255,10 @@ def main():
                 # Train 3 epoch on the generated data and do this for 50 times
                 if FLAGS.Continue:
                     try:
-                        saver.restore(sess, model_path+'/leakgan_preD')
+                        saver.restore(sess, model_path+'/leakgan_pre')
                     except Exception:
                         try:
-                            saver.restore(sess, model_path+'/leakgan_pre')
+                            saver.restore(sess, model_path+'/leakgan_preD')
                         except Exception:
                             print('new model')
 
