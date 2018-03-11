@@ -254,8 +254,13 @@ def main():
                 print('Start pre-training discriminator...')
                 # Train 3 epoch on the generated data and do this for 50 times
                 if FLAGS.Continue:
-                    saver.restore(sess, model_path+'/leakgan_preD')
-                    saver.restore(sess, model_path+'/leakgan_pre')
+                    try:
+                        saver.restore(sess, model_path+'/leakgan_preD')
+                    except Exception:
+                        try:
+                            saver.restore(sess, model_path+'/leakgan_pre')
+                        except Exception:
+                            print('new model')
 
                 for i in range((epoch_record+10-1)//5):
                     if epoch_record == 0:
