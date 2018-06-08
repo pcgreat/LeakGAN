@@ -1,8 +1,8 @@
 # LeakGAN
 
-## Requirements: 
+## Requirements:
 * **Tensorflow r1.2.1**
-* Python 2.7
+* Python 3.4+
 * CUDA 7.5+ (For GPU)
 
 ## Introduction
@@ -21,7 +21,7 @@ data_loader.py: Data helpy function for this experiment.
 
 Main.py: The Main function of this experiment.
 
-## Details 
+## Details
 We provide example codes to repeat the synthetic data experiments with oracle evaluation mechanisms in length 20 and 40.
 To run the experiment with default parameters for length 20:
 ```
@@ -39,12 +39,12 @@ The experiment has two stages. In the first stage, use the positive data provide
 When you running the code, the pre-train model will be store in folder ``ckpts``, if you want to restore the pre-trained discriminator model, you can run:
 ```
 $ python Main.py --resD=True --model=leakgan_preD
-``` 
+```
 
 if you want to restore all pre-trained model, you can run:
 ```
 $ python Main.py --restore=True --model=leakgan_pre
-``` 
+```
 
 After running the experiments, you could get the negative log-likelihodd performance printed in the console like:
 #### Length 40:
