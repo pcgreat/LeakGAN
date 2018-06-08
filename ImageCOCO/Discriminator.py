@@ -1,12 +1,13 @@
 import tensorflow as tf
-import  numpy as np
-from tensorflow.python.ops import tensor_array_ops, control_flow_ops
 
-def cosine_similarity(a,b):
+
+def cosine_similarity(a, b):
     normalize_a = tf.nn.l2_normalize(a, -1)
     normalize_b = tf.nn.l2_normalize(b, -1)
     cos_similarity = (tf.multiply(normalize_a, normalize_b))
     return cos_similarity
+
+
 # An alternative to tf.nn.rnn_cell._linear function, which has been removed in Tensorfow 1.0.1
 # The highway layer is borrowed from https://github.com/mkroutikov/tf-lstm-char-cnn
 def linear(input_, output_size, scope=None):
@@ -56,8 +57,10 @@ def highway(input_, size, num_layers=1, bias=-2.0, f=tf.nn.relu, scope='Highway'
 
     return output
 
+
 class Discriminator(object):
-    def __init__(self, sequence_length, num_classes, vocab_size,dis_emb_dim,filter_sizes, num_filters,batch_size,hidden_dim, start_token,goal_out_size,step_size,l2_reg_lambda=0.0):
+    def __init__(self, sequence_length, num_classes, vocab_size, dis_emb_dim, filter_sizes, num_filters, batch_size,
+                 hidden_dim, start_token, goal_out_size, step_size, l2_reg_lambda=0.0):
         self.sequence_length = sequence_length
         self.num_classes = num_classes
         self.vocab_size = vocab_size
@@ -84,12 +87,13 @@ class Discriminator(object):
 
             # Train for Discriminator
             with tf.variable_scope("feature") as self.feature_scope:
-                D_feature = self.FeatureExtractor_unit(self.D_input_x,self.dropout_keep_prob)#,self.dropout_keep_prob)
+                D_feature = self.FeatureExtractor_unit(self.D_input_x,
+                                                       self.dropout_keep_prob)  # ,self.dropout_keep_prob)
                 self.feature_scope.reuse_variables()
             # tf.get_variable_scope().reuse_variables()
 
-            D_scores, D_predictions,self.ypred_for_auc = self.classification(D_feature)
-            losses = tf.nn.softmax_cross_entropy_with_logits(logits=D_scores, labels=self.D_input_y)
+            D_scores, D_predictions, self.ypred_for_auc = self.classification(D_feature)
+            losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=D_scores, labels=self.D_input_y)
             self.D_loss = tf.reduce_mean(losses) + self.l2_reg_lambda * self.D_l2_loss
 
             self.D_params = [param for param in tf.trainable_variables() if
@@ -98,12 +102,11 @@ class Discriminator(object):
             D_grads_and_vars = d_optimizer.compute_gradients(self.D_loss, self.D_params, aggregation_method=2)
             self.D_train_op = d_optimizer.apply_gradients(D_grads_and_vars)
 
-
     # This module used to Extract sentence's Feature
     def FeatureExtractor(self):
         # Embedding layer
         # scope.reuse_variables()
-        def unit(Feature_input,dropout_keep_prob):#,dropout_keep_prob):
+        def unit(Feature_input, dropout_keep_prob):  # ,dropout_keep_prob):
             with tf.variable_scope('FeatureExtractor') as scope:
                 with tf.device('/cpu:0'), tf.name_scope("embedding") as scope:
                     #
@@ -152,7 +155,7 @@ class Discriminator(object):
 
                     # Add dropout
                 with tf.name_scope("dropout"):
-                    h_drop = tf.nn.dropout(h_highway,dropout_keep_prob)
+                    h_drop = tf.nn.dropout(h_highway, dropout_keep_prob)
 
             return h_drop
 
