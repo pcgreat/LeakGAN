@@ -2,7 +2,7 @@ import pickle
 data_Name = "cotra"
 vocab_file = "vocab_" + data_Name + ".pkl"
 
-word, vocab = pickle.load(open('save/'+vocab_file))
+word, vocab = pickle.load(open('data/'+vocab_file))
 print(len(word))
 input_file = 'save/generator_sample.txt'
 # input_file = 'save/coco_451.txt'

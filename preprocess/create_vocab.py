@@ -18,12 +18,12 @@ vocab = {}
 for i, w in enumerate(word):
     vocab[w] = i
 
-with open("vocab_essay.pkl", "wb") as pkl:
+with open("data/vocab_essay.pkl", "wb") as pkl:
     cPickle.dump((word, vocab), pkl)
 
 n = 0
 max_seq_length = 100
-with open("realtrain_essay.txt", "w") as g:
+with open("data/realtrain_essay.txt", "w") as g:
     with open("composition.txt", "r") as f:
         for line in f:
             toks = line.split("</d>")[0].strip().split()

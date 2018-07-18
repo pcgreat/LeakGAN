@@ -28,7 +28,7 @@ dis_batch_size = 64
 #  Basic Training Parameters
 #########################################################################################
 TOTAL_BATCH = 800
-positive_file = 'save/realtrain_cotra.txt'
+positive_file = 'data/realtrain_cotra.txt'
 negative_file = 'save/generator_sample.txt'
 generated_num = 10000
 model_path = './ckpts'
