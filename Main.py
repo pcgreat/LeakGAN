@@ -12,7 +12,7 @@ from LeakGANModel import LeakGAN
 from config import SEED, START_TOKEN, SEQ_LENGTH, BATCH_SIZE, dis_filter_sizes, dis_embedding_dim, \
     dis_num_filters, HIDDEN_DIM, EMB_DIM, GOAL_OUT_SIZE, GOAL_SIZE, positive_file, PRE_EPOCH_NUM, generated_num, \
     negative_file, dis_dropout_keep_prob, TOTAL_BATCH, \
-    LEAKGAN_MPATH, LEAKGAN_PRE_MPATH, vocab_file
+    LEAKGAN_MPATH, LEAKGAN_PRE_MPATH, vocab_file, eval_file
 from dataloader import Gen_Data_loader, Dis_dataloader
 from rewards import get_reward
 
@@ -46,14 +46,27 @@ def generate_samples(sess, trainable_model, batch_size, generated_num, output_fi
 def pre_train_epoch(sess, trainable_model, data_loader):
     # Pre-train the generator using MLE for one epoch
     supervised_g_losses = []
-    # data_loader.reset_pointer()
+    data_loader.reset_pointer()
 
-    for it in range(data_loader.num_batch // 20):
+    for it in range(data_loader.num_batch):
         batch = data_loader.next_batch()
-        _, g_loss, _, _ = trainable_model.pretrain_step(sess, batch, 1.0)
+        _, w_loss, _, g_loss = trainable_model.pretrain_step(sess, batch, 1.0)  # TODO: g_loss or w_loss
         supervised_g_losses.append(g_loss)
 
     return np.mean(supervised_g_losses)
+
+
+def target_loss(sess, trainable_model, data_loader):
+    # target_loss means the oracle negative log-likelihood tested with the oracle model "target_lstm"
+    # For more details, please see the Section 4 in https://arxiv.org/abs/1609.05473
+    nll = []
+    data_loader.reset_pointer()
+
+    for it in range(data_loader.num_batch):
+        batch = data_loader.next_batch()
+        w_loss, g_loss = trainable_model.pretrain_step_eval(sess, batch)
+        nll.append(g_loss)
+    return np.mean(nll)
 
 
 def main():
@@ -66,8 +79,9 @@ def main():
     assert START_TOKEN == 0
 
     gen_data_loader = Gen_Data_loader(BATCH_SIZE, SEQ_LENGTH)
+    likelihood_data_loader = Gen_Data_loader(BATCH_SIZE, SEQ_LENGTH)
 
-    word, vocab = pickle.load(open(vocab_file,"rb"))
+    word, vocab = pickle.load(open(vocab_file, "rb"))
     vocab_size = len(vocab)
 
     dis_data_loader = Dis_dataloader(BATCH_SIZE, SEQ_LENGTH)
@@ -93,6 +107,7 @@ def main():
 
     generate_samples(sess, leakgan, BATCH_SIZE, generated_num, negative_file, 0)
     gen_data_loader.create_batches(positive_file)
+    likelihood_data_loader.create_batches(eval_file)
     saver_variables = tf.global_variables()
     saver = tf.train.Saver(saver_variables)
 
@@ -123,14 +138,15 @@ def main():
                         }
                         D_loss, _ = sess.run([discriminator.D_loss, discriminator.D_train_op], feed)
                         D_losses.append(D_loss)
-                logger.info(("pre-train discriminator: epoch", epoch_record, "nll_test_loss", np.mean(D_losses)))
+                logger.info(("pre-train discriminator: epoch", epoch_record, "training_loss", np.mean(D_losses)))
                 leakgan.update_feature_function(discriminator)
 
             #  pre-train generator
             loss = pre_train_epoch(sess, leakgan, gen_data_loader)
             if epoch_record % 5 == 0:
                 generate_samples(sess, leakgan, BATCH_SIZE, generated_num, negative_file, 0)
-            logger.info(('pre-train generator: epoch', epoch_record, 'nll_test_loss', loss))
+                test_loss = target_loss(sess, leakgan, likelihood_data_loader)
+            logger.info(('pre-train generator: epoch', epoch_record, 'training_loss', loss, "test_loss", test_loss))
 
             epoch_record += 1
 
@@ -151,7 +167,7 @@ def main():
                 _, _, g_loss, w_loss = sess.run(
                     [leakgan.manager_updates, leakgan.worker_updates, leakgan.goal_loss, leakgan.worker_loss],
                     feed_dict=feed)
-                logger.info(('total_batch: ', total_batch, "g_loss:", g_loss, "w_loss:", w_loss))
+                logger.info(('total_batch: ', total_batch, "goal_loss:", g_loss, "worker_loss:", w_loss))
         global_step += 1
 
         # Test

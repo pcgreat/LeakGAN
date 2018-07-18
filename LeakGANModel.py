@@ -465,6 +465,11 @@ class LeakGAN(object):
                            feed_dict={self.x: x, self.drop_out: dropout_keep_prob})
         return outputs
 
+    def pretrain_step_eval(self, sess, x):
+        outputs = sess.run([ self.pretrain_worker_loss, self.pretrain_goal_loss],
+                           feed_dict={self.x: x, self.drop_out: 1.0})
+        return outputs
+
     def generate(self, sess, dropout_keep_prob, train=1):
         outputs = sess.run(self.gen_x, feed_dict={self.drop_out: dropout_keep_prob, self.train: train})
         return outputs

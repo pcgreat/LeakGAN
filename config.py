@@ -28,7 +28,8 @@ dis_batch_size = 64
 #  Basic Training Parameters
 #########################################################################################
 TOTAL_BATCH = 800
-positive_file = 'data/realtrain_essay.txt' # 'data/realtrain_cotra.txt'
+positive_file = 'data/realtrain_essay_train.txt' # 'data/realtrain_cotra.txt'
+eval_file = 'data/realtrain_essay_eval.txt'
 negative_file = 'save/generator_sample.txt' # 'save/generator_sample.txt'
 vocab_file = "data/vocab_essay.pkl"
 generated_num = 1000
