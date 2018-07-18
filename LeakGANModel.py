@@ -1,5 +1,9 @@
+import logging
+
 import tensorflow as tf
 from tensorflow.python.ops import tensor_array_ops, control_flow_ops
+
+logger = logging.getLogger("root")
 
 
 class LeakGAN(object):
@@ -150,8 +154,8 @@ class LeakGAN(object):
 
         self.real_goal_array = self.real_goal_array.stack()
         self.real_goal_array = tf.transpose(self.real_goal_array, perm=[1, 0, 2])
-        print(self.real_goal_array.shape)
-        print(self.sub_feature.shape)
+        logger.info(("real_goal_array shape", self.real_goal_array.shape))
+        logger.info(("sub_feature shape", self.sub_feature.shape))
         self.pretrain_goal_loss = -tf.reduce_sum(1 - tf.losses.cosine_distance(tf.nn.l2_normalize(self.sub_feature, 2),
                                                                                tf.nn.l2_normalize(self.real_goal_array,
                                                                                                   2), 2)

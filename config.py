@@ -1,13 +1,13 @@
 #########################################################################################
 #  Generator  Hyper-parameters
 ######################################################################################
-EMB_DIM = 128  # embedding dimension
-HIDDEN_DIM = 128  # hidden state dimension of lstm cell
-SEQ_LENGTH = 100  # sequence length
+EMB_DIM = 32  # embedding dimension
+HIDDEN_DIM = 32  # hidden state dimension of lstm cell
+SEQ_LENGTH = 30  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 200  # supervise (maximum likelihood estimation) epochs
+PRE_EPOCH_NUM = 50  # supervise (maximum likelihood estimation) epochs
 SEED = 88
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 GOAL_SIZE = 16
 STEP_SIZE = 4
@@ -28,7 +28,13 @@ dis_batch_size = 64
 #  Basic Training Parameters
 #########################################################################################
 TOTAL_BATCH = 800
-positive_file = 'data/realtrain_cotra.txt'
-negative_file = 'save/generator_sample.txt'
-generated_num = 10000
+positive_file = 'data/realtrain_essay.txt' # 'data/realtrain_cotra.txt'
+negative_file = 'save/generator_sample.txt' # 'save/generator_sample.txt'
+vocab_file = "data/vocab_essay.pkl"
+generated_num = 1000
 model_path = './ckpts'
+
+
+# PRED_MPATH = "ckpts/preD/leakgan_preD"
+LEAKGAN_MPATH = "ckpts/leakgan/leakgan"
+LEAKGAN_PRE_MPATH = "ckpts/leakgan_pre/leakgan_pre"
